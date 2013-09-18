@@ -20,7 +20,7 @@ class Tests(unittest.TestCase):
     def testTwo(self):
         elcount = 0
         s = suite.Suite(max=3,
-                        setter=lambda k, v: isinstance(v, str),
+                        check=lambda k, v: isinstance(v, str),
                         changed=lambda su: self.assertEquals(len(su), elcount))
         self.assertEquals(s.max, 3)
         elcount = 1
@@ -33,6 +33,7 @@ class Tests(unittest.TestCase):
         s.append("Andy")
         # Max reached
         self.assertFalse(s.append('Eric'))
+
 
 if __name__ == '__main__':
     unittest.main()

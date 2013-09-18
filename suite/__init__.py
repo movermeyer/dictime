@@ -2,7 +2,7 @@ version = '0.0.2'
 __version__ = version
 
 class KeyGenerator:
-    def __init__(self, start=-1):
+    def __init__(self, start=0):
         self.i = start
         
     def next(self):
@@ -11,10 +11,16 @@ class KeyGenerator:
 
 
 class Collection(object):
-    def __init__(self, *suites):
+    def __init__(self, fitter=None, *suites):
         self._orderby = 'priority'
-        self._suites = sorted(suites,
-                              key=lambda s: getattr(s, self.orderby))
+        self._suites = []
+        self._fitter = fitter
+        self._key_gen = KeyGenerator()
+        if suites:
+            self._suites = sorted(suites,
+                                  key=lambda s: getattr(s, self.orderby))
+            for suite in self._suites:
+                suite._key_gen = self._key_gen
 
     def push(self, suite):
         assert isinstance(suite, Suite)
@@ -23,10 +29,22 @@ class Collection(object):
                               key=lambda s: getattr(s, self.orderby))
 
     def append(self, value):
+        """Checks for best fit suite via sorted suites -> fitter
+        """
+        # try best fit
+        for suite in self._suites:
+            if self._fitter and suite._check_value(value) and self._fitter(self, suite, value):
+                if suite.append(value):
+                    return True
+        # try any fit
         for suite in self._suites:
             if suite.append(value):
                 return True
         return False
+
+    @property
+    def suites(self):
+        return self._suites
 
     @property
     def orderby(self):
@@ -39,19 +57,36 @@ class Collection(object):
     def __len__(self):
         return len(self._suites)
     
-    def __iter__(self):
-        return self._suites
+    def values(self):
+        values = []
+        [[values.append(value) for value in suite] for suite in self._suites]
+        return values
 
+    def keys(self):
+        keys = []
+        [[keys.append(key) for key in suite.keys()] for suite in self._suites]
+        return keys
+
+    def clear(self):
+        [suite.clear() for suite in self._suites]
+
+    def __iter__(self):
+        return iter(self.values())
+
+    def __getitem__(self, key):
+        for suite in self._suites:
+            if suite.has_get(key):
+                return suite.get(key)
 
 
 class Suite( object ):
-    def __init__(self, getter=None, setter=None, changed=None, yielder=None, max=None, priority=0, keygen_start=0):
+    def __init__(self, getter=None, check=None, changed=None, yielder=None, max=None, priority=0):
         self._getter = getter
-        self._setter = setter
+        self._checker = check
         self._changed = changed
         self._yielder = yielder
         self._dict = {}
-        self._key_gen = KeyGenerator(keygen_start)
+        self._key_gen = KeyGenerator()
         self._max = max
         self._priority = priority
     
@@ -65,9 +100,6 @@ class Suite( object ):
         while self._dict.has_key(key):
             key = self._key_gen.next()
         return key
-
-    def get_all(self):
-        return self._dict
 
     def __getitem__(self, key):
         if self._dict.has_key(key):
@@ -118,7 +150,7 @@ class Suite( object ):
         if self._max_hit():
             return False
         key = self._get_next_key()
-        if self._on_append(key, value):
+        if self._check_value(value):
             self._dict[key] = value
             self._on_changed()
             return key
@@ -206,7 +238,7 @@ class Suite( object ):
 
     @property
     def setter(self, callback):
-        self._setter = callback
+        self._checker = callback
 
     @property
     def priority(self):
@@ -223,12 +255,12 @@ class Suite( object ):
         if self._changed is not None:
             self._changed(self)
 
-    def _on_append(self, key, value):
-        assert self._setter is not False, "Not allowed to add to this Suite"
-        if self._setter is None:
+    def _check_value(self, value):
+        assert self._checker is not False, "Not allowed to add to this Suite"
+        if self._checker is None:
             return True
         else:
-            return self._setter(key, value) is not False
+            return self._checker(self, value) is not False
 
     def _max_hit(self):
         return self.max is not None and len(self._dict) >= self.max
