@@ -4,5 +4,14 @@
 		{
 			"path": "/Users/peak/Sites/site-packages/suite"
 		}
+	],
+	"build_systems":
+	[
+		{
+			"name": "Python Venv",
+			"cmd": ["cd", "$project_path"],
+			"working_dir": "$project_path",
+			"cmd": ["python", "$file"]
+		}
 	]
 }

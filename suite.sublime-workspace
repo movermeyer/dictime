@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"_get",
+				"_get_next_key	function"
+			],
+			[
 				"pro",
 				"project_path"
 			],
@@ -510,15 +514,19 @@
 			[
 				"EX",
 				"EXISTS"
-			],
-			[
-				"status",
-				"statusstamp"
 			]
 		]
 	},
 	"buffers":
 	[
+		{
+			"file": "suite/__init__.py",
+			"settings":
+			{
+				"buffer_size": 3763,
+				"line_ending": "Unix"
+			}
+		}
 	],
 	"build_system": "Python Venv",
 	"command_palette":
@@ -1056,6 +1064,15 @@
 	},
 	"file_history":
 	[
+		"/Users/peak/Sites/site-packages/suite/suite/__init__.py",
+		"/Users/peak/Sites/site-packages/suite/suite.sublime-project",
+		"/Users/peak/Sites/site-packages/suite/Makefile",
+		"/Users/peak/Sites/site-packages/suite/LICENCE",
+		"/Users/peak/Sites/site-packages/suite/readme.md",
+		"/Users/peak/Sites/site-packages/suite/setup.cfg",
+		"/Users/peak/Sites/site-packages/suite/.gitignore",
+		"/Users/peak/Sites/site-packages/suite/setup.py",
+		"/Users/peak/Sites/site-packages/suite/suite/test.py",
 		"/Users/peak/Sites/Sushi/sushi-buffet/install/topostgres.py",
 		"/Users/peak/Sites/Sushi/sushi-buffet/tests/unittests/shop/cart_test.py",
 		"/Users/peak/Sites/Sushi/sushi-buffet/buffet.sublime-project",
@@ -1174,16 +1191,7 @@
 		"/Users/peak/Sites/Sushi/sushi-buffet/handlers/socials/facebook.py",
 		"/Users/peak/Sites/Sushi/sushi-buffet/handlers/socials/__init__.py",
 		"/Users/peak/Sites/Sushi/sushi-buffet/foursquare/__init__.py",
-		"/Users/peak/Sites/Sushi/sushi-buffet/handlers/socials/FoursquareMixin.py",
-		"/Users/peak/Sites/Sushi/sushi-buffet/bin/html/menu.html",
-		"/Users/peak/Sites/Sushi/sushi-buffet/handlers/menu.py",
-		"/Users/peak/Sites/Sushi/sushi-buffet/tests/unittests/shopping.py",
-		"/Users/peak/Sites/Sushi/sushi-buffet/tests/unittests/__init__.py",
-		"/Users/peak/Sites/Sushi/sushi-buffet/test/suite/unittest/email.py",
-		"/Users/peak/Sites/Sushi/sushi-buffet/handlers/update.py",
-		"/Users/peak/Sites/Sushi/sushi-buffet/handlers/employee.py",
-		"/Users/peak/Sites/Sushi/sushi-buffet/install/migration.py",
-		"/Users/peak/Sites/Sushi/sushi-buffet/handlers/settings.py"
+		"/Users/peak/Sites/Sushi/sushi-buffet/handlers/socials/FoursquareMixin.py"
 	],
 	"find":
 	{
@@ -1213,6 +1221,10 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"_cache",
+			"Bundle",
+			"bundle",
+			"Bundle",
 			"/opt",
 			"project_path",
 			"build",
@@ -1336,10 +1348,6 @@
 			"\"\"\"+",
 			"store.schema",
 			"public.",
-			"example.",
-			"public.",
-			"example.",
-			"public.",
 			"example."
 		],
 		"highlight": true,
@@ -1430,8 +1438,127 @@
 	"groups":
 	[
 		{
+			"selected": 0,
 			"sheets":
 			[
+				{
+					"buffer": 0,
+					"file": "suite/__init__.py",
+					"settings":
+					{
+						"buffer_size": 3763,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"annotations":
+							[
+								"TODO",
+								"README",
+								"FIXME"
+							],
+							"csslint_options":
+							{
+								"adjoining-classes": "warning",
+								"box-model": true,
+								"box-sizing": "warning",
+								"compatible-vendor-prefixes": "warning",
+								"display-property-grouping": true,
+								"duplicate-background-images": "warning",
+								"duplicate-properties": true,
+								"empty-rules": true,
+								"errors": true,
+								"fallback-colors": "warning",
+								"floats": "warning",
+								"font-faces": "warning",
+								"font-sizes": "warning",
+								"gradients": "warning",
+								"ids": "warning",
+								"import": "warning",
+								"important": "warning",
+								"known-properties": true,
+								"outline-none": "warning",
+								"overqualified-elements": "warning",
+								"qualified-headings": "warning",
+								"regex-selectors": "warning",
+								"rules-count": "warning",
+								"shorthand": "warning",
+								"star-property-hack": "warning",
+								"text-indent": "warning",
+								"underscore-property-hack": "warning",
+								"unique-headings": "warning",
+								"universal-selector": "warning",
+								"vendor-prefix": true,
+								"zero-units": "warning"
+							},
+							"gjslint_ignore":
+							[
+								110.0
+							],
+							"gjslint_options":
+							[
+							],
+							"javascript_linter": "jshint",
+							"jshint_options":
+							{
+								"browser": true,
+								"curly": true,
+								"evil": true,
+								"regexdash": true,
+								"sub": true,
+								"trailing": true,
+								"wsh": true
+							},
+							"pep8": true,
+							"pep8_ignore":
+							[
+								"E501"
+							],
+							"perl_linter": "perlcritic",
+							"pyflakes_ignore":
+							[
+							],
+							"pyflakes_ignore_import_*": true,
+							"sublimelinter": true,
+							"sublimelinter_delay": 2.0,
+							"sublimelinter_disable":
+							[
+							],
+							"sublimelinter_executable_map":
+							{
+							},
+							"sublimelinter_fill_outlines": false,
+							"sublimelinter_gutter_marks": true,
+							"sublimelinter_gutter_marks_theme": "simple",
+							"sublimelinter_mark_style": "none",
+							"sublimelinter_notes": false,
+							"sublimelinter_objj_check_ascii": false,
+							"sublimelinter_popup_errors_on_save": false,
+							"sublimelinter_syntax_map":
+							{
+								"C++": "c",
+								"Python Django": "python",
+								"Ruby on Rails": "ruby"
+							},
+							"sublimelinter_wrap_find": true,
+							"syntax": "Packages/Python/Python.tmLanguage",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
 			]
 		}
 	],
