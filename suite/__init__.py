@@ -11,22 +11,20 @@ class KeyGenerator:
 
 
 class Collection(object):
-    def __init__(self, fitter=None, *suites):
-        self._orderby = 'priority'
+    def __init__(self, *suites, **kwargs):
         self._suites = []
-        self._fitter = fitter
+        self._fitter = kwargs.get('fitter', None)
         self._key_gen = KeyGenerator()
         if suites:
-            self._suites = sorted(suites,
-                                  key=lambda s: getattr(s, self.orderby))
             for suite in self._suites:
                 suite._key_gen = self._key_gen
+            self._suites = sorted(suites)
+            
 
     def push(self, suite):
         assert isinstance(suite, Suite)
         self._suites.append(suite)
-        self._suites = sorted(self._suites,
-                              key=lambda s: getattr(s, self.orderby))
+        self._suites = sorted(self._suites)
 
     def append(self, value):
         """Checks for best fit suite via sorted suites -> fitter
@@ -46,16 +44,8 @@ class Collection(object):
     def suites(self):
         return self._suites
 
-    @property
-    def orderby(self):
-        return self._orderby
-
-    @orderby.setter
-    def orderby(self, attr):
-        self._orderby = attr
-
     def __len__(self):
-        return len(self._suites)
+        return sum([len(s) for s in self._suites])
     
     def values(self):
         values = []
@@ -88,6 +78,7 @@ class Suite( object ):
         self._dict = {}
         self._key_gen = KeyGenerator()
         self._max = max
+        # default method for sorting
         self._priority = priority
     
     # -------------
@@ -200,22 +191,13 @@ class Suite( object ):
         return self._yielder() if self._yielder else iter(self._dict.values())
 
     def __lt__(self, other):
-        if isinstance(other, Suite):
-            return len(self) < len(other)
-        else:
-            return len(self) < other
+        return self.priority < other.priority
 
     def __gt__(self, other):
-        if isinstance(other, Suite):
-            return len(self) > len(other)
-        else:
-            return len(self) > other
+        return self.priority > other.priority
 
     def __eq__(self, other):
-        if isinstance(other, Suite):
-            return len(self) == len(other)
-        else:
-            return len(self) == other
+        return self.priority == other.priority
 
     # -------------
     # Properties
