@@ -86,14 +86,14 @@ class Suite( object ):
     # -------------
     def _get_next_key(self):
         key = self._key_gen.next()
-        if not self._dict.has_key(key):
+        if key not in self._dict:
             return key
-        while self._dict.has_key(key):
+        while key in self._dict:
             key = self._key_gen.next()
         return key
 
     def __getitem__(self, key):
-        if self._dict.has_key(key):
+        if key in self._dict:
             return self._dict.get(key)
         else:
             if self._getter is not None:
@@ -101,15 +101,9 @@ class Suite( object ):
             else:
                 raise KeyError(key)
 
-    def iteritems(self):
-        return self._dict
-
     def keys(self):
         return self._dict.keys()
 
-    def has_key(self, key):
-        return self._dict.has_key(key)
-    
     def values(self):
         return self._dict.values()
 
@@ -149,7 +143,7 @@ class Suite( object ):
             return False
 
     def setdefault(self, key, value):
-        if self._dict.has_key(key):
+        if key in self._dict:
             return self._dict[key]
         else:
             return self.put(key, value)

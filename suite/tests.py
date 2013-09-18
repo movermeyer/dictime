@@ -10,10 +10,10 @@ class Tests(unittest.TestCase):
         self.assertListEqual(c.suites, [s2, s1])
         for x in range(3):
             self.assertTrue(c.append(x))
-            self.assertEquals(len(s2), x+1)
+            self.assertEqual(len(s2), x+1)
         for x in range(4):
             self.assertTrue(c.append(x))
-            self.assertEquals(len(s1), x+1)
+            self.assertEqual(len(s1), x+1)
         self.assertFalse(c.append(1))
 
     def testSuiteChecks(self):
@@ -21,19 +21,19 @@ class Tests(unittest.TestCase):
         s2 = suite.Suite(check=lambda s, v: isinstance(v, int))
         c = suite.Collection(s1, s2)
         self.assertTrue(c.append(75))
-        self.assertEquals(len(s2), 1)
-        self.assertEquals(len(s1), 0)
+        self.assertEqual(len(s2), 1)
+        self.assertEqual(len(s1), 0)
         self.assertTrue(c.append("steve"))
-        self.assertEquals(len(s2), 1)
-        self.assertEquals(len(s1), 1)
-        self.assertEquals(len(c), 2)
+        self.assertEqual(len(s2), 1)
+        self.assertEqual(len(s1), 1)
+        self.assertEqual(len(c), 2)
 
     def testSuiteChanged(self):
         elcount = 0
         s = suite.Suite(max=3,
                         check=lambda s, v: isinstance(v, str),
-                        changed=lambda su: self.assertEquals(len(su), elcount))
-        self.assertEquals(s.max, 3)
+                        changed=lambda su: self.assertEqual(len(su), elcount))
+        self.assertEqual(s.max, 3)
         elcount = 1
         s.append("Steve")
         elcount = 2
@@ -51,9 +51,9 @@ class Tests(unittest.TestCase):
         c = suite.Collection(s1, s2, fitter=lambda _, su, value: su.priority % 2 == value % 2)
         for x in range(100):
             self.assertTrue(c.append(x))
-        self.assertEquals(len(c), 100)
-        self.assertEquals(len(s1), 50)
-        self.assertEquals(len(s2), 50)
+        self.assertEqual(len(c), 100)
+        self.assertEqual(len(s1), 50)
+        self.assertEqual(len(s2), 50)
 
 
 if __name__ == '__main__':
