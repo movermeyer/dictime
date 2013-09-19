@@ -55,6 +55,12 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(s1), 50)
         self.assertEqual(len(s2), 50)
 
+    def testDefault(self):
+        s = suite.Suite(getter=lambda k: 'value')
+        self.assertEqual(s.get('key'), 'value')
+        c = suite.Collection(suite.Suite(getter=lambda k: 'value'))
+        self.assertEqual(c.get('key'), 'value')
+
 
 if __name__ == '__main__':
     unittest.main()

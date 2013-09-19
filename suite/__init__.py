@@ -65,8 +65,23 @@ class Collection(object):
 
     def __getitem__(self, key):
         for suite in self._suites:
-            if suite.has_get(key):
+            if key in suite:
                 return suite.get(key)
+
+    def get(self, key, _else=None):
+        # Check if its already there
+        for suite in self._suites:
+            if key in suite:
+                return suite.get(key)
+        # ok, go with else
+        if _else is not None:
+            return _else
+        # try to find a value
+        for suite in self._suites:
+            returns = suite.get(key)
+            if returns is not None:
+                return returns
+
 
 
 class Suite( object ):
@@ -108,7 +123,14 @@ class Suite( object ):
         return self._dict.values()
 
     def get(self, key, _else=None):
-        self._dict.get(key, _else if _else is not None else self._getter(key) if self._getter else None)
+        if key in self._dict:
+            return self._dict.get(key)
+        elif self._getter is not None and _else is None:
+            value = self._getter(key)
+            if value is not None:
+                self._dict[key] = value
+                return value
+        return _else
 
     # -------------
     # Sets
@@ -192,6 +214,11 @@ class Suite( object ):
 
     def __eq__(self, other):
         return self.priority == other.priority
+
+    def __contains__(self, key):
+        """Looks at keys
+        """
+        return key in self._dict
 
     # -------------
     # Properties
