@@ -8,10 +8,9 @@
 	"build_systems":
 	[
 		{
-			"name": "Python Venv",
-			"cmd": ["cd", "$project_path"],
+			"name": "Run Tests",
 			"working_dir": "$project_path",
-			"cmd": ["python", "$file"]
+			"cmd": ["make", "test"]
 		}
 	]
 }
