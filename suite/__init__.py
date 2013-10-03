@@ -1,4 +1,4 @@
-version = '0.1.1'
+version = '0.1.2'
 __version__ = version
 
 class KeyGenerator:
@@ -82,6 +82,11 @@ class Collection(object):
             if returns is not None:
                 return returns
 
+    def remove(self, child):
+        for suite in self._suites:
+            if suite.has(child):
+                return suite.remove(child)
+        return None
 
 
 class Suite( object ):
@@ -178,9 +183,9 @@ class Suite( object ):
         """Removes a child from the Suite.
         """
         key = None
-        for i, c in self._dict.iteritems():
-            if c == child:
-                key = i
+        for i in self._dict.items():
+            if i[1] is child:
+                key = i[0]
                 break
         if key is not None:
             del self._dict[key]
@@ -200,6 +205,12 @@ class Suite( object ):
     # -------------
     # Basics
     # -------------
+    def has(self, child):
+        for c in self:
+            if c is child:
+                return True
+        return False
+
     def __len__(self):
         return len(self._dict)
     
