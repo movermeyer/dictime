@@ -1,6 +1,7 @@
 version = '0.1.2'
 __version__ = version
 
+
 class KeyGenerator:
     def __init__(self, start=0):
         self.i = start
@@ -89,7 +90,7 @@ class Collection(object):
         return None
 
 
-class Suite( object ):
+class Suite(object):
     def __init__(self, getter=None, check=None, changed=None, yielder=None, max=None, priority=0):
         self._getter = getter
         self._checker = check
