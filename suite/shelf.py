@@ -39,17 +39,11 @@ class Shelf(signals.Signals):
     """A groovy dictonary on steroids.
     """
     __signals__ = ["shelf-refresh",
-                   "asset-removed"]
+                   "asset-removed",
+                   "asset-added"]
 
     def __init__(self, getter=None, check=None, changed=None, yielder=None, 
                  refresh=None, max=None, priority=0):
-        """
-        ..todo: 
-            1) Timezone sensative.....
-            2) multiple key assignments (because one key may become valid from future, and expire respectively)
-
-        refresh=(datetime || timedelta) 
-        """
         # set custom functions
         self.getter = getter
         self.checker = check
@@ -78,10 +72,10 @@ class Shelf(signals.Signals):
         if self.refresh:
             if isinstance(self.refresh, datetime) and datetime.now() >= self.refresh:
                 self.refresh = None
-                self.emit("shelf-refresh", self)
+                self.emit("shelf-refresh")
             elif isinstance(self.refresh, timedelta) and datetime.now() >= self._lastrefresh + self.refresh:
                 self._lastrefresh = datetime.now()
-                self.emit("shelf-refresh", self)
+                self.emit("shelf-refresh")
 
     # -------------
     # Gets
@@ -154,19 +148,24 @@ class Shelf(signals.Signals):
     def set(self, key, value, expires=None, future=None, check=True):
         """Set a value
         """
+        if key is None:
+            key = self._get_next_key()
         if self.has(key):
             # multi-valued asset management :)
             if (check and self._check_value(value)) or not check:
                 self._dict[key].set(value, expires=expires, future=future)
+                self.emit("asset-added", key, value)
                 return key
+            return False
         else:
             if self._max_hit():
                 raise MaxHit(key, value)
             if (check and self._check_value(value)) or not check:
-                if key is None:
-                    key = self._get_next_key()
                 self._dict[key] = Book(value, expires=expires, future=future)
+                self.emit("asset-added", key, value)
                 return key
+            return False
+
 
     def append(self, value, expires=None, future=None, check=True):
         """Add a new value to the suite
@@ -186,6 +185,8 @@ class Shelf(signals.Signals):
         """Removes a key from the Suite
         """
         del self._dict[key]
+        self.emit("asset-removed", key)
+        return True
 
     def __delitem__(self, key):
         self.remove(key)
@@ -260,11 +261,10 @@ class Shelf(signals.Signals):
     # Callbacks
     # -------------
     def _check_value(self, value):
-        assert self.checker is not False, "Not allowed to add to this Shelf"
-        if self.checker is None:
-            return True
+        if hasattr(self.checker, "__call__"):
+            return self.checker(self, value) is True
         else:
-            return self.checker(self, value) is not False
+            return True
 
     def _max_hit(self):
         return self.max is not None and len(self) >= self.max

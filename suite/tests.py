@@ -33,24 +33,6 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(s1), 1)
         self.assertEqual(len(l), 2)
 
-    def test_shelf_changed(self):
-        elcount = 0
-        s = suite.Shelf(max=3,
-                        check=lambda s, v: isinstance(v, str),
-                        changed=lambda su: self.assertEqual(len(su), elcount))
-        self.assertEqual(s.max, 3)
-        elcount = 1
-        self.assertEqual(s.append("Steve"), 1)
-        elcount = 2
-        self.assertEqual(s.append("Joe"), 2)
-        # Cannot append numbers
-        self.assertFalse(s.append(10))
-        elcount = 3
-        self.assertEqual(s.append("Andy"), 3)
-        
-        # Max reached
-        self.assertRaises(suite.MaxHit, s.append, 'Eric')
-
     def test_library_fitter(self):
         s1 = suite.Shelf(priority=2, check=lambda s, v: isinstance(v, int))
         s2 = suite.Shelf(priority=1)
