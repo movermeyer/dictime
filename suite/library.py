@@ -1,9 +1,8 @@
 from suite.shelf import Shelf
 from suite.helpers import MaxHit
+from suite.helpers import Undefined
 from suite.helpers import KeyGenerator
 
-class Undefined:
-    pass
 
 class Library(object):
     def __init__(self, *suites, **kwargs):

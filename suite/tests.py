@@ -76,14 +76,20 @@ class Tests(unittest.TestCase):
         self.assertEqual(s.get(k1), 'steve')
         self.assertEqual(s.get(k2), 'eric')
         self.assertEqual(s.get(k3), 'joe')
-        self.assertEqual(s.get(k4), None)
+        self.assertTrue(s.get(k4) is suite.Undefined)
         self.assertEqual(len(s), 3)
         time.sleep(1)
-        self.assertEqual(s.get(k1), None)
-        self.assertEqual(s.get(k2), None)
-        self.assertEqual(s.get(k3), None)
+        self.assertTrue(s.get(k1) is suite.Undefined)
+        self.assertTrue(s.get(k2) is suite.Undefined)
+        self.assertTrue(s.get(k3) is suite.Undefined)
         self.assertEqual(s.get(k4), 'madison')
         self.assertEqual(len(s), 1)
+
+    def test_iter(self):
+        s = suite.Shelf()
+        [s.append(x) for x in range(10)]
+        self.assertListEqual([x for x in s],
+                             [(x+1, x) for x in range(10)])
 
 if __name__ == '__main__':
     unittest.main()

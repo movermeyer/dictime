@@ -11,3 +11,6 @@ class KeyGenerator:
     def next(self):
         self.i += 1
         return self.i
+
+class Undefined:
+    pass

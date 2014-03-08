@@ -1,67 +1,68 @@
+import signals
 from datetime import datetime
+from datetime import timedelta
 
 from suite.helpers import MaxHit
+from suite.helpers import Undefined
 from suite.helpers import KeyGenerator
+
 
 class Book(object):
     def __init__(self, value, expires=None, future=None):
-        self.value = value
-        self.expires = expires
-        self.future = future
-        self._iter_keys = None
+        self.assets = [(value, expires, future)]
 
-    def __call__(self):
+    def __call__(self, tz=None):
         """Called to get the asset values and if it is valid
         
         valid: True =>  Is valid
                False => Has expired, destory it
                None =>  Future, do nothing
         """
-        if self.expires and self.expires <= datetime.now():
-            return self.value, False
-        elif self.future:
-            if self.future <= datetime.now():
-                # has recently become valid
-                self.future = None
-            else:
-                # not valid, will be in the future
-                return self.value, None
-        return self.value, True
+        now = datetime.now(tz)
+        for value, expires, future in self.assets:
+            # has expired
+            if expires is not None and expires <= now:
+                continue
+            # in future
+            elif future is not None and future >= now:
+                continue
+            return value
 
-class Shelf(object):
+        return Undefined
+
+    def set(self, value, expires=None, future=None):
+        # override on conflicts!
+        self.assets.append((value, expires, future))
+
+
+class Shelf(object, signals.Signals):
     """A groovy dictonary on steroids.
     """
-    def __init__(self, getter=None, check=None, changed=None, yielder=None, max=None, priority=0):
+    __signals__ = ["shelf-refresh",
+                   "asset-removed"]
+
+    def __init__(self, getter=None, check=None, changed=None, yielder=None, 
+                 refresh=None, max=None, priority=0):
+        """
+        ..todo: 
+            1) Timezone sensative.....
+            2) multiple key assignments (because one key may become valid from future, and expire respectively)
+
+        refresh=(datetime || timedelta) 
+        """
         # set custom functions
         self.getter = getter
         self.checker = check
         self.changed = changed
         self.yielder = yielder
+        self.refresh = refresh
+        self._lastrefresh = datetime.now() if self.refresh else None
         self.max = max
         self.priority = priority
 
         self._dict = {}
         self._key_gen = KeyGenerator()
         # default method for sorting
-    
-    def _manage_asset(self, key):
-        """Pass an asset in 
-        this method will deduce its validity
-        """
-        try:
-            asset = self._dict[key]
-        except KeyError:
-            return None, False
-        value, valid = asset()
-        # asset expired
-        if valid is False:
-            # delete the asset
-            del self._dict[key]
-            self._on_changed()
-            return None, False
-        elif valid is None:
-            return value, False
-        return value, True
 
     def _get_next_key(self):
         """Serial integar generator
@@ -72,6 +73,15 @@ class Shelf(object):
         while key in self._dict:
             key = self._key_gen.next()
         return key
+
+    def _refresh(self):
+        if self.refresh:
+            if isinstance(self.refresh, datetime) and datetime.now() >= self.refresh:
+                self.refresh = None
+                self.emit("shelf-refresh", self)
+            elif isinstance(self.refresh, timedelta) and datetime.now() >= self._lastrefresh + self.refresh:
+                self._lastrefresh = datetime.now()
+                self.emit("shelf-refresh", self)
 
     # -------------
     # Gets
@@ -88,8 +98,8 @@ class Shelf(object):
         """
         keys = []
         for key in self._dict.keys():
-            value, valid = self._manage_asset(key)
-            if valid:
+            value = self._dict[key]()
+            if value is not Undefined:
                 keys.append(key)
         return keys
 
@@ -98,19 +108,20 @@ class Shelf(object):
         """
         values = []
         for key in self._dict.keys():
-            value, valid = self._manage_asset(key)
-            if valid:
+            value = self._dict[key]()
+            if value is not Undefined:
                 values.append(value)
         return values
 
-    def get(self, key, _else=None):
+    def get(self, key, _else=Undefined, tz=None):
         """The method to get an assets value
         """
+        self._refresh()
         if key in self._dict:
             # get the asset, call it
-            value, valid = self._manage_asset(key)
+            value = self._dict[key]()
             # asset expired
-            return value if valid else _else
+            return value if value is not Undefined else _else
         # asset not found, is there a getter?
         elif self.getter is not None:
             if self._max_hit():
@@ -143,23 +154,28 @@ class Shelf(object):
     def set(self, key, value, expires=None, future=None, check=True):
         """Set a value
         """
-        if self._max_hit():
-            raise MaxHit(key, value)
-        if (check and self._check_value(value)) or not check:
-            if key is None:
-                key = self._get_next_key()
-            self._dict[key] = Book(value, expires=expires, future=future)
-            self._on_changed()
-            return key
+        if self.has(key):
+            # multi-valued asset management :)
+            if (check and self._check_value(value)) or not check:
+                self._dict[key].set(value, expires=expires, future=future)
+                return key
+        else:
+            if self._max_hit():
+                raise MaxHit(key, value)
+            if (check and self._check_value(value)) or not check:
+                if key is None:
+                    key = self._get_next_key()
+                self._dict[key] = Book(value, expires=expires, future=future)
+                return key
 
     def append(self, value, expires=None, future=None, check=True):
         """Add a new value to the suite
         """
         return self.set(None, value, expires=expires, future=future, check=check)
 
-    def setdefault(self, key, value, expires=None, future=None, check=True):
-        if self.has(key):
-            return self.get(key)
+    def setdefault(self, key, value, expires=None, future=None, check=True, tz=None):
+        if self.has(key, tz=tz):
+            return self.get(key, tz=tz)
         else:
             return self.set(key, value, expires=expires, future=future, check=check)
 
@@ -170,7 +186,6 @@ class Shelf(object):
         """Removes a key from the Suite
         """
         del self._dict[key]
-        self._on_changed()
 
     def __delitem__(self, key):
         self.remove(key)
@@ -179,43 +194,43 @@ class Shelf(object):
         """Delete all keys
         """
         self._dict = {}
-        self._on_changed()
 
     # -------------
     # Basics
     # -------------
-    def has(self, key):
+    def has(self, key, tz=None):
         """Does the key exist?
         This method will check to see if it has expired too.
         """
-        if key in self._dict:
-            self.get(key)
-            return key in self._dict
-        return False
+        return self.get(key, tz=tz) is not Undefined
 
     def __contains__(self, key):
+        """Time insensitive
+        """
         return self.has(key)
 
     def __len__(self):
+        """Time insensitive
+        """
         length = 0
         for key in self._dict.keys():
-            value, valid = self._manage_asset(key)
-            if valid:
+            value = self._dict[key]()
+            if value is not Undefined:
                 length += 1
         return length
-    
-    def __iter__(self):
-        if self.yielder:
-            return self.yielder()
-        else:
-            self._iter_keys = self.keys()
-            return self
 
-    def next(self):
-        if len(self._iter_keys) == 0:
-            raise StopIteration
-        key = self._iter_keys.pop()
-        return key, self.get(key)
+    def iter(self, tz=None):
+        """Timezone sensative itering
+        """
+        for key in self._dict:
+            value = self.get(key, Undefined, tz=tz)
+            if value is not Undefined:
+                yield key, value
+
+    def __iter__(self):
+        """Time insensitive
+        """
+        return self.iter()
 
     # -------------
     # Comparing
@@ -244,10 +259,6 @@ class Shelf(object):
     # -------------
     # Callbacks
     # -------------
-    def _on_changed(self):
-        if self.changed is not None:
-            self.changed(self)
-
     def _check_value(self, value):
         assert self.checker is not False, "Not allowed to add to this Shelf"
         if self.checker is None:

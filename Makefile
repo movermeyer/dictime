@@ -20,7 +20,7 @@ upload:
 	python setup.py sdist upload
 
 test:
-	python -m suite.tests
+	. venv/bin/activate; python -m suite.tests
 
 test.all:
 	python2.7 -m suite.tests
