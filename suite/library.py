@@ -1,82 +1,108 @@
-from suite.helpers import KeyGenerator
 from suite.shelf import Shelf
+from suite.helpers import MaxHit
+from suite.helpers import KeyGenerator
+
+class Undefined:
+    pass
 
 class Library(object):
     def __init__(self, *suites, **kwargs):
-        self._suites = []
-        self._fitter = kwargs.get('fitter', None)
+        self._shelves = []
+        self.fitter = kwargs.get('fitter', None)
         self._key_gen = KeyGenerator()
         if suites:
-            for suite in self._suites:
+            for suite in self._shelves:
                 suite._key_gen = self._key_gen
-            self._suites = sorted(suites)
-            
+            self._shelves = sorted(suites)
 
     def push(self, suite):
+        """Add another shelf
+        """
         assert isinstance(suite, Shelf)
-        self._suites.append(suite)
-        self._suites = sorted(self._suites)
+        self._shelves.append(suite)
+        self._shelves = sorted(self._shelves)
 
-    def append(self, value):
+    def append(self, value, expires=None, future=None):
+        return self.set(None, value, expires=expires, future=future)
+
+    def set(self, key, value, expires=None, future=None):
         """Checks for best fit suite via sorted suites -> fitter
         """
-        # try best fit
-        for suite in self._suites:
-            if self._fitter and suite._check_value(value) and self._fitter(self, suite, value):
-                if suite.append(value):
-                    return True
-        # try any fit
-        for suite in self._suites:
-            if suite.append(value):
-                return True
+        # Check for fitters first
+        for shelf in self._shelves:
+            # must fit
+            if self.fitter and self.fitter(self, shelf, value) and shelf._check_value(value):
+                try:
+                    return shelf.set(key, value, expires=expires, future=future)
+                except MaxHit:
+                    pass
+
+        # Now any that check out
+        for shelf in self._shelves:
+            try:
+                if shelf._check_value(value):
+                    return shelf.set(key, value, expires=expires, future=future)
+            except MaxHit:
+                pass
+
+        # Now any
+        for shelf in self._shelves:
+            try:
+                return shelf.set(key, value, expires=expires, future=future)
+            except MaxHit:
+                pass
+
         return False
 
     @property
-    def suites(self):
-        return self._suites
+    def shelves(self):
+        return self._shelves
 
     def __len__(self):
-        return sum([len(s) for s in self._suites])
+        return sum([len(s) for s in self._shelves])
     
     def values(self):
         values = []
-        [[values.append(value) for value in suite] for suite in self._suites]
+        [[values.append(value) for value in shelf] for shelf in self._shelves]
         return values
 
     def keys(self):
         keys = []
-        [[keys.append(key) for key in suite.keys()] for suite in self._suites]
+        [[keys.append(key) for key in shelf.keys()] for shelf in self._shelves]
         return keys
 
     def clear(self):
-        [suite.clear() for suite in self._suites]
+        [shelf.clear() for shelf in self._shelves]
 
     def __iter__(self):
         return iter(self.values())
 
     def __getitem__(self, key):
-        for suite in self._suites:
-            if key in suite:
-                return suite.get(key)
+        for shelf in self._shelves:
+            if key in shelf:
+                return shelf.get(key)
 
     def get(self, key, _else=None):
         # Check if its already there
-        for suite in self._suites:
-            if key in suite:
-                return suite.get(key)
+        for shelf in self._shelves:
+            if shelf.has(key):
+                return shelf.get(key)
+
+        # use getters
+        for shelf in self._shelves:
+            if shelf.getter:
+                try:
+                    result = shelf.get(key, Undefined)
+                    if result is not Undefined:
+                        return result
+                except MaxHit:
+                    pass
+
         # ok, go with else
-        if _else is not None:
-            return _else
-        # try to find a value
-        for suite in self._suites:
-            returns = suite.get(key)
-            if returns is not None:
-                return returns
+        return _else
 
-    def remove(self, child):
-        for suite in self._suites:
-            if suite.has(child):
-                return suite.remove(child)
+    def remove(self, key):
+        for shelf in self._shelves:
+            if shelf.has(key):
+                return shelf.remove(key)
         return None
-
-

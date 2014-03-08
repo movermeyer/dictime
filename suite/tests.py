@@ -7,32 +7,33 @@ import suite
 
 
 class Tests(unittest.TestCase):
-    def _test_collection_max(self):
+    def test_library_max(self):
         s1 = suite.Shelf(max=4, priority=2)
         s2 = suite.Shelf(max=3, priority=1)
         c = suite.Library(s1, s2)
-        self.assertListEqual(c.suites, [s2, s1])
+        self.assertListEqual(c.shelves, [s2, s1])
         for x in range(3):
             self.assertTrue(c.append(x))
             self.assertEqual(len(s2), x+1)
         for x in range(4):
             self.assertTrue(c.append(x))
             self.assertEqual(len(s1), x+1)
-        self.assertRaises(suite.MaxHit, c.append, x)
+        self.assertEqual(c.append(x), False)
 
-    def test_suite_checks(self):
+    def test_shelf_checks(self):
         s1 = suite.Shelf(check=lambda s, v: isinstance(v, str))
         s2 = suite.Shelf(check=lambda s, v: isinstance(v, int))
-        c = suite.Library(s1, s2)
-        self.assertTrue(c.append(75))
+        l = suite.Library(s1, s2)
+        _id = l.append(75)
+        self.assertTrue(_id is not False)
         self.assertEqual(len(s2), 1)
         self.assertEqual(len(s1), 0)
-        self.assertTrue(c.append("steve"))
+        self.assertTrue(l.append("steve"))
         self.assertEqual(len(s2), 1)
         self.assertEqual(len(s1), 1)
-        self.assertEqual(len(c), 2)
+        self.assertEqual(len(l), 2)
 
-    def test_suite_changed(self):
+    def test_shelf_changed(self):
         elcount = 0
         s = suite.Shelf(max=3,
                         check=lambda s, v: isinstance(v, str),
@@ -50,7 +51,7 @@ class Tests(unittest.TestCase):
         # Max reached
         self.assertRaises(suite.MaxHit, s.append, 'Eric')
 
-    def test_collection_fitter(self):
+    def test_library_fitter(self):
         s1 = suite.Shelf(priority=2, check=lambda s, v: isinstance(v, int))
         s2 = suite.Shelf(priority=1)
         c = suite.Library(s1, s2, fitter=lambda _, su, value: su.priority % 2 == value % 2)
@@ -60,7 +61,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(s1), 50)
         self.assertEqual(len(s2), 50)
 
-    def test_default(self):
+    def test_getters(self):
         s = suite.Shelf(getter=lambda k: ('value', None, None))
         self.assertEqual(s.get('key'), 'value')
         c = suite.Library(suite.Shelf(getter=lambda k: ('value', None, None)))
