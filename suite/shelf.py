@@ -35,7 +35,7 @@ class Book(object):
         self.assets.append((value, expires, future))
 
 
-class Shelf(object, signals.Signals):
+class Shelf(signals.Signals):
     """A groovy dictonary on steroids.
     """
     __signals__ = ["shelf-refresh",

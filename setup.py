@@ -1,6 +1,7 @@
 from setuptools import setup
 
-classifiers = []
+classifiers = ["Development Status :: 4 - Beta",
+               "License :: OSI Approved :: Apache Software License"]
 
 setup(name='suite',
       version='1.0.0',
