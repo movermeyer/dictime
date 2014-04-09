@@ -8,6 +8,7 @@ from suite.helpers import KeyGenerator
 
 
 class Book(object):
+    __slots__ = ['assets']
     def __init__(self, value, expires=None, future=None):
         self.assets = [(value, expires, future)]
 
@@ -35,13 +36,13 @@ class Book(object):
         self.assets.append((value, expires, future))
 
 
-class Shelf(signals.Signals):
+class Shelf(object):
     """A groovy dictonary on steroids.
     """
-    __signals__ = ["shelf-refresh",
-                   "asset-removed",
-                   "asset-added"]
-
+    __slots__ = ["getter", "checker", "changed", "priority",
+                 "yielder", "refresh", "signals", 
+                 "_lastrefresh", "max", "_dict", "_key_gen"]
+    
     def __init__(self, getter=None, check=None, changed=None, yielder=None, 
                  refresh=None, max=None, priority=0):
         # set custom functions
@@ -53,6 +54,7 @@ class Shelf(signals.Signals):
         self._lastrefresh = datetime.now() if self.refresh else None
         self.max = max
         self.priority = priority
+        self.signals = signals.Signals(self, "shelf-refresh", "asset-removed", "asset-added")
 
         self._dict = {}
         self._key_gen = KeyGenerator()
@@ -72,10 +74,10 @@ class Shelf(signals.Signals):
         if self.refresh:
             if isinstance(self.refresh, datetime) and datetime.now() >= self.refresh:
                 self.refresh = None
-                self.emit("shelf-refresh")
+                self.signals.emit("shelf-refresh")
             elif isinstance(self.refresh, timedelta) and datetime.now() >= self._lastrefresh + self.refresh:
                 self._lastrefresh = datetime.now()
-                self.emit("shelf-refresh")
+                self.signals.emit("shelf-refresh")
 
     # -------------
     # Gets
@@ -154,7 +156,7 @@ class Shelf(signals.Signals):
             # multi-valued asset management :)
             if (check and self._check_value(value)) or not check:
                 self._dict[key].set(value, expires=expires, future=future)
-                self.emit("asset-added", key, value)
+                self.signals.emit("asset-added", key, value)
                 return key
             return False
         else:
@@ -162,7 +164,7 @@ class Shelf(signals.Signals):
                 raise MaxHit(key, value)
             if (check and self._check_value(value)) or not check:
                 self._dict[key] = Book(value, expires=expires, future=future)
-                self.emit("asset-added", key, value)
+                self.signals.emit("asset-added", key, value)
                 return key
             return False
 
@@ -185,7 +187,7 @@ class Shelf(signals.Signals):
         """Removes a key from the Suite
         """
         del self._dict[key]
-        self.emit("asset-removed", key)
+        self.signals.emit("asset-removed", key)
         return True
 
     def __delitem__(self, key):
