@@ -1,24 +1,30 @@
 from suite.shelf import Shelf
-from suite.helpers import MaxHit
 from suite.helpers import Undefined
 from suite.helpers import KeyGenerator
 
 
 class Library(object):
-    def __init__(self, *suites, **kwargs):
+    def __init__(self, *shelves, **kwargs):
         self._shelves = []
         self.fitter = kwargs.get('fitter', None)
         self._key_gen = KeyGenerator()
-        if suites:
-            for suite in self._shelves:
-                suite._key_gen = self._key_gen
-            self._shelves = sorted(suites)
+        if shelves:
+            map(self.add_shelf, shelves)
 
-    def push(self, suite):
+    def add_shelf(self, shelf):
         """Add another shelf
         """
-        assert isinstance(suite, Shelf)
-        self._shelves.append(suite)
+        assert isinstance(shelf, Shelf)
+        # install shelf
+        self._shelves.append(shelf)
+        # listen for changes
+        shelf.signals.connect("priority-changed", self._resort)
+        # set the labeler
+        shelf._key_gen = self._key_gen
+        # resort the library
+        self._resort()
+
+    def _resort(self, *_):
         self._shelves = sorted(self._shelves)
 
     def append(self, value, expires=None, future=None):
@@ -31,25 +37,19 @@ class Library(object):
         for shelf in self._shelves:
             # must fit
             if self.fitter and self.fitter(self, shelf, value) and shelf._check_value(value):
-                try:
-                    return shelf.set(key, value, expires=expires, future=future)
-                except MaxHit:
-                    pass
+                if shelf.set(key, value, expires=expires, future=future):
+                    return True
 
         # Now any that check out
         for shelf in self._shelves:
-            try:
-                if shelf._check_value(value):
-                    return shelf.set(key, value, expires=expires, future=future)
-            except MaxHit:
-                pass
+            if shelf._check_value(value) \
+              and shelf.set(key, value, expires=expires, future=future):
+                    return True
 
         # Now any
         for shelf in self._shelves:
-            try:
-                return shelf.set(key, value, expires=expires, future=future)
-            except MaxHit:
-                pass
+            if shelf.set(key, value, expires=expires, future=future):
+                return True
 
         return False
 
@@ -90,12 +90,9 @@ class Library(object):
         # use getters
         for shelf in self._shelves:
             if shelf.getter:
-                try:
-                    result = shelf.get(key, Undefined)
-                    if result is not Undefined:
-                        return result
-                except MaxHit:
-                    pass
+                result = shelf.get(key, Undefined)
+                if result is not Undefined:
+                    return result
 
         # ok, go with else
         return _else
