@@ -1,5 +1,6 @@
+import itertools
+
 from suite.shelf import Shelf
-from suite.helpers import Undefined
 from suite.helpers import KeyGenerator
 
 
@@ -42,9 +43,8 @@ class Library(object):
 
         # Now any that check out
         for shelf in self._shelves:
-            if shelf._check_value(value) \
-              and shelf.set(key, value, expires=expires, future=future):
-                    return True
+            if shelf._check_value(value) and shelf.set(key, value, expires=expires, future=future):
+                return True
 
         # Now any
         for shelf in self._shelves:
@@ -61,44 +61,43 @@ class Library(object):
         return sum([len(s) for s in self._shelves])
     
     def values(self):
-        values = []
-        [[values.append(value) for value in shelf] for shelf in self._shelves]
-        return values
+        return itertools.chain(*[shelf.values() for shelf in self._shelves])
 
     def keys(self):
-        keys = []
-        [[keys.append(key) for key in shelf.keys()] for shelf in self._shelves]
-        return keys
+        return itertools.chain(*[shelf.keys() for shelf in self._shelves])
 
     def clear(self):
-        [shelf.clear() for shelf in self._shelves]
+        map(lambda s: s.clear(), self._shelves)
 
     def __iter__(self):
-        return iter(self.values())
+        return self.values()
 
     def __getitem__(self, key):
-        for shelf in self._shelves:
-            if key in shelf:
-                return shelf.get(key)
+        return self.get(key)
 
     def get(self, key, _else=None):
         # Check if its already there
         for shelf in self._shelves:
-            if shelf.has(key):
-                return shelf.get(key)
+            try:
+                return shelf[key]
+            except KeyError:
+                continue
 
         # use getters
         for shelf in self._shelves:
             if shelf.getter:
-                result = shelf.get(key, Undefined)
-                if result is not Undefined:
-                    return result
+                try:
+                    return shelf[key]
+                except KeyError:
+                    continue
 
         # ok, go with else
         return _else
 
     def remove(self, key):
         for shelf in self._shelves:
-            if shelf.has(key):
+            try:
                 return shelf.remove(key)
-        return None
+            except KeyError:
+                continue
+        return False

@@ -50,7 +50,41 @@ class Tests(unittest.TestCase):
     # -------
     # Shelves
     # -------
+    def test_shelf_checks(self):
+        "shelf can check books"
+        s1 = suite.Shelf(check=lambda s, v: isinstance(v, str))
+        s2 = suite.Shelf(check=lambda s, v: isinstance(v, int))
+        l = suite.Library(s1, s2)
+        _id = l.append(75)
+        self.assertTrue(_id is not False)
+        self.assertEqual(len(s2), 1)
+        self.assertEqual(len(s1), 0)
+        self.assertTrue(l.append("steve"))
+        self.assertEqual(len(s2), 1)
+        self.assertEqual(len(s1), 1)
+        self.assertEqual(len(l), 2)
 
+    def test_getters(self):
+        "shelf can get books"
+        s = suite.Shelf(getter=lambda k: ('value', None, None))
+        self.assertEqual(s.get('key'), 'value')
+        c = suite.Library(suite.Shelf(getter=lambda k: ('value', None, None)))
+        self.assertEqual(c.get('key'), 'value')
+
+    def test_iter(self):
+        "can iter shelf"
+        s = suite.Shelf()
+        [s.append(x) for x in range(10)]
+        self.assertListEqual([x for x in s],
+                             [(x+1, x) for x in range(10)])
+
+    def test_shelf_max(self):
+       "max books on shelf"
+       s = suite.Shelf(max=4)
+       for x in range(4):
+           self.assertTrue(s.append(x))
+       self.assertFalse(s.append(1))
+    
     # -------
     # Library
     # -------
@@ -79,13 +113,6 @@ class Tests(unittest.TestCase):
         l.add_shelf(a)
         self.assertListEqual(l.shelves, [a])
 
-    def test_shelf_max(self):
-        "max books on shelf"
-        s = suite.Shelf(max=4)
-        for x in range(4):
-            self.assertTrue(s.append(x))
-        self.assertFalse(s.append(1))
-
     def test_library_max(self):
         "max books in library"
         s1 = suite.Shelf(max=4, priority=2)
@@ -99,20 +126,6 @@ class Tests(unittest.TestCase):
             self.assertEqual(len(s1), x+1)
         self.assertEqual(c.append(x), False)
 
-    def test_shelf_checks(self):
-        "shelf can check books"
-        s1 = suite.Shelf(check=lambda s, v: isinstance(v, str))
-        s2 = suite.Shelf(check=lambda s, v: isinstance(v, int))
-        l = suite.Library(s1, s2)
-        _id = l.append(75)
-        self.assertTrue(_id is not False)
-        self.assertEqual(len(s2), 1)
-        self.assertEqual(len(s1), 0)
-        self.assertTrue(l.append("steve"))
-        self.assertEqual(len(s2), 1)
-        self.assertEqual(len(s1), 1)
-        self.assertEqual(len(l), 2)
-
     def test_library_fitter(self):
         "library can prioritize shelves"
         s1 = suite.Shelf(priority=2, check=lambda s, v: isinstance(v, int))
@@ -124,20 +137,37 @@ class Tests(unittest.TestCase):
         self.assertEqual(len(s1), 50)
         self.assertEqual(len(s2), 50)
 
-    def test_getters(self):
-        "shelf can get books"
-        s = suite.Shelf(getter=lambda k: ('value', None, None))
-        self.assertEqual(s.get('key'), 'value')
-        c = suite.Library(suite.Shelf(getter=lambda k: ('value', None, None)))
-        self.assertEqual(c.get('key'), 'value')
+    def test_library_values(self):
+        "get library values"
+        c = suite.Library(suite.Shelf(max=2), suite.Shelf(max=2))
+        [c.append(x) for x in 'abcd']
+        self.assertItemsEqual(c.values(), list('abcd'))
 
-    def test_iter(self):
-        "can iter shelf"
-        s = suite.Shelf()
-        [s.append(x) for x in range(10)]
-        self.assertListEqual([x for x in s],
-                             [(x+1, x) for x in range(10)])
+    def test_library_keys(self):
+        "get library keys"
+        c = suite.Library(suite.Shelf(max=2), suite.Shelf(max=2))
+        [c.append(x) for x in 'abcd']
+        self.assertItemsEqual(c.keys(), map(int,list('1234')))
 
+    def test_library_clear(self):
+        "clear library"
+        c = suite.Library(suite.Shelf(max=2), suite.Shelf(max=2))
+        [c.append(x) for x in 'abcd']
+        c.clear()
+        self.assertEqual(len(c), 0)
+
+    def test_library_iter(self):
+        c = suite.Library(suite.Shelf(max=2), suite.Shelf(max=2))
+        [c.append(x) for x in 'abcd']
+        self.assertListEqual([x for x in c], list('abcd'))
+
+    def test_libary_getitem(self):
+        c = suite.Library(suite.Shelf(max=2), suite.Shelf(max=2))
+        [c.append(x) for x in 'abcd']
+        self.assertEqual(c[1], 'a')
+        self.assertEqual(c[2], 'b')
+        self.assertEqual(c[3], 'c')
+        self.assertEqual(c[4], 'd')
 
 if __name__ == '__main__':
     unittest.main()

@@ -188,19 +188,15 @@ class Shelf(object):
     def set(self, key, value, expires=None, future=None, check=True):
         """Set a value
         """
-        if key is None:
-            key = self._get_next_key()
-        if self.has(key):
-            # multi-valued asset management :)
-            if (check and self._check_value(value)) or not check:
-                self._dict[key].set(value, expires=expires, future=future)
-                self.signals.emit("asset-added", key, value)
-                return key
-            return False
+        if key and (self._check_value(value) or not check):
+            self._dict[key].set(value, expires=expires, future=future)
+            self.signals.emit("asset-added", key, value)
+            return key
         else:
             if self._max_hit():
                 return False
             if (check and self._check_value(value)) or not check:
+                key = self._get_next_key()
                 self._dict[key] = Book(value, expires=expires, future=future)
                 self.signals.emit("asset-added", key, value)
                 return key
@@ -270,29 +266,26 @@ class Shelf(object):
         """
         return self.values().index(child)
 
-    # -------------
+    # ---------
     # Comparing
-    # -------------
+    # ---------
     def __lt__(self, other):
-        if isinstance(other, Shelf):
+        if not isinstance(other, Shelf):
+            return NotImplemented
+        else:
             return self.priority < other.priority
-        elif isinstance(other, int):
-            return len(self) < other
-        raise TypeError("Can not compare Shelf to %s" % type(other))
 
     def __gt__(self, other):
-        if isinstance(other, Shelf):
+        if not isinstance(other, Shelf):
+            return NotImplemented
+        else:
            return self.priority > other.priority
-        elif isinstance(other, int):
-           return len(self) > other
-        raise TypeError("Can not compare Shelf to %s" % type(other))
 
     def __eq__(self, other):
-        if isinstance(other, Shelf):
+        if not isinstance(other, Shelf):
+            return NotImplemented
+        else:
             return self.priority == other.priority
-        elif isinstance(other, int):
-            return len(self) == other
-        raise TypeError("Can not compare Shelf to %s" % type(other))
 
     # -------------
     # Callbacks
@@ -305,4 +298,3 @@ class Shelf(object):
 
     def _max_hit(self):
         return self.max is not None and len(self) >= self.max
-
