@@ -1,7 +1,13 @@
 language: python
+notifications:
+  email: false
 python:
   - 2.7
   - pypy
-  - 3.2
-  - 3.3
-script: python -m suite.tests
+install:
+  - python setup.py install
+  - pip install coveralls
+script:
+  coverage run -m suite.tests
+after_success:
+  coveralls
