@@ -3,8 +3,8 @@
 	[
 		{
 			"path": "~/Documents/stevepeak/suite",
-			"file_exclude_patterns": ["*.rdb", ".pyc", "*.sublime-workspace", "LICENSE"],
-			"folder_exclude_patterns": ["venv", "dist", "*.egg-info"]
+			"file_exclude_patterns": ["*.rdb", ".pyc", "*.sublime-workspace", "LICENSE", ".coverage"],
+			"folder_exclude_patterns": ["venv", "dist", "*.egg-info", "coverage_html_report"]
 		}
 	],
 	"settings":

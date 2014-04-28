@@ -1,11 +1,4 @@
-help:
-	@echo "\033]0;suite\007"
-	@echo "\n\033[1m------ suite ------\033[0m \n\
-	\033[1mopen\033[0m: opens project in sublime\n\
-	\033[1mtest\033[0m: run unit testing\n\
-	\033[1mdeploy\033[0m: tag upload\n\n\
-	\t \033[94mhttps://github.com/stevepeak/suite\033[0m\n\
-	\t\t\033[91mHappy Hacking\033[0m\n"
+.PHONY: tag test
 
 open:
 	subl --project ./suite.sublime-project
@@ -20,8 +13,13 @@ upload:
 	python setup.py sdist upload
 
 test:
-	. venv/bin/activate; python -m suite.tests
+	. venv/bin/activate; nosetests --with-coverage --cover-package=suite --cover-html --cover-html-dir=coverage_html_report --cover-branches
 
 test.all:
 	python2.7 -m suite.tests
 	python3.3 -m suite.tests
+
+venv:
+	virtualenv venv
+	. venv/bin/activate; pip install nose rednose coverage
+	. venv/bin/activate; pip install -r requirements.txt

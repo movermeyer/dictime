@@ -27,3 +27,5 @@ lib64
 __pycache__
 suite.sublime-workspace
 venv
+.coverage
+coverage_html_report
