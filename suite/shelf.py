@@ -1,114 +1,77 @@
 import signals
 from threading import RLock
 from datetime import datetime
-from datetime import timedelta
 
-from suite.helpers import undefined
-from suite.helpers import KeyGenerator
-
-
-class Book(object):
-    """Books will always have (1) value at a time.
-    Any new values added will replace the prior value with no discrimination
-    """
-    __slots__ = ['futures', 'lock']
-    def __init__(self, value=undefined, expires=None, future=None):
-        self.futures = []
-        # thread safety
-        self.lock = RLock()
-        if value != undefined:
-            self.set(value, expires, future)
-
-    def get(self):
-        """Called to get the asset values and if it is valid
-        """
-        now = datetime.now()
-        with self.lock:
-            active = []
-            for i, vef in enumerate(self.futures):
-                # has expired
-                if (vef[1] or datetime.max) <= now:
-                    self.futures.pop(i)
-                    continue
-                # in future
-                elif (vef[2] or datetime.min) >= now:
-                    continue
-                active.append(i)
-
-            if active:
-                # this will evict values old values
-                # because new ones are "more recent" via future
-                values = self.futures[active[-1]]
-                for i in active[:-1]:
-                    self.futures.pop(i)
-                return self.futures.index(values), values[0]
-            return None, undefined
-
-    def __len__(self):
-        return len(self.futures)
-
-    def evict(self):
-        key, value = self.get()
-        if key:
-            self.futures.pop(key)
-
-    def set(self, value, expires=None, future=None):
-        # this needs to change, because of TZ issues
-        now = datetime.now()
-        assert expires is None or expires > now, "already expired"
-        assert future is None or future > now, "future must be in the future"
-        if expires and future:
-            assert future < expires, "expires before existing"
-
-        if future and future < now:
-            self.evict()
-
-        self.futures.append((value, expires, future))
+from .book import Book
+from .helpers import undefined
+from .helpers import KeyGenerator
 
 
 class Shelf(object):
     """A groovy dictonary on steroids.
     """
-    __slots__ = ["getter", "checker", "changed", "_priority",
-                 "yielder", "refresh", "signals", 
-                 "_lastrefresh", "max", "_dict", "_key_gen"]
-    
-    def __init__(self, getter=None, check=None, changed=None, yielder=None, 
-                 refresh=None, max=None, priority=0):
+    __slots__ = ["_lookup", "_validate", "_priority",
+                 "_expires", "signals", "__lock",
+                 "_lastrefresh", "_max", "_dict", "__keygen"]
+
+    def __init__(self, lookup=None, validate=None, expires=None, max=None, priority=0):
         # set custom functions
-        self.getter = getter
-        self.checker = check
-        self.changed = changed
-        self.yielder = yielder
-        self.refresh = refresh
-        self._lastrefresh = datetime.now() if self.refresh else None
-        self.max = max
+        self._lookup = lookup
+        assert hasattr(lookup, "__call__") or lookup is None, "lookup must be callable"
+
+        self._validate = validate
+        assert hasattr(validate, "__call__") or validate is None, "validate must be callable"
+
+        self._expires = expires or datetime.max
+        assert isinstance(self._expires, datetime), "expires is not a valid type"
+
+        self._max = max
+        assert isinstance(self._max, (int, type(None))), "max must be an integer"
+
         self._priority = priority
-        self.signals = signals.Signals(self, "shelf-refresh", "priority-changed",
-                                             "asset-removed", "asset-added")
+        assert isinstance(self._priority, (int, type(None))), "priority must be an integer"
 
         self._dict = {}
-        self._key_gen = KeyGenerator()
-        # default method for sorting
+        self.__keygen = None
+        self.__lock = None
+
+        self.signals = signals.Signals(self, "priority-changed", "asset-removed", "asset-added")
+
+    @property
+    def _keygen(self):
+        if self.__keygen is None:
+            self.__keygen = KeyGenerator()
+        return self.__keygen
+
+    @_keygen.setter
+    def _keygen(self, keygen):
+        self.__keygen = keygen
+
+    @property
+    def _lock(self):
+        if self.__lock is None:
+            self.__lock = RLock()
+        return self.__lock
+
+    @_lock.setter
+    def _lock(self, lock):
+        self.__lock = lock
 
     def _get_next_key(self):
-        """Serial integar generator
+        """Serial integer generator
         """
-        key = self._key_gen.next()
+        key = self._keygen.next()
         if key not in self._dict:
             return key
         while key in self._dict:
-            key = self._key_gen.next()
+            key = self._keygen.next()
         return key
 
-    def _refresh(self):
-        if self.refresh:
-            if isinstance(self.refresh, datetime) and datetime.now() >= self.refresh:
-                self.refresh = None
-                self.signals.emit("shelf-refresh")
-            elif isinstance(self.refresh, timedelta) and datetime.now() >= self._lastrefresh + self.refresh:
-                self._lastrefresh = datetime.now()
-                self.signals.emit("shelf-refresh")
+    def _expired(self):
+        if self._expires <= datetime.now():
+            self._dict = {}
+            return True
+        return False
 
     @property
     def priority(self):
@@ -149,32 +112,34 @@ class Shelf(object):
                 values.append(value)
         return values
 
-    def get(self, key, _else=undefined, tz=None):
+    def get(self, key, _else=None):
         """The method to get an assets value
         """
-        self._refresh()
-        if key in self._dict:
-            # get the asset, call it
-            _, value = self._dict[key].get()
-            # asset expired
-            return value if value is not undefined else _else
-        # asset not found, is there a getter?
-        elif self.getter is not None:
-            if self._max_hit():
-                # sorry, max hit, cant even look for a new key.
+        with self._lock:
+            # see if everything expired
+            if self._expired():
                 return _else
-            # getter must return, the value, expires and future
             try:
-                value, expires, future = self.getter(key)
-                # set the data
-                self._dict[key] = Book(value, expires, future)
-                # return the asset, use this method to make sure the Expires/Future
-                return self.get(key)
+                _, value = self._dict[key].get()
+                return value
             except KeyError:
-                # no asset exists, dont save it as None
-                pass
-        # all else, return the else
-        return _else
+                # sorry, max hit, cant even look for a new key.
+                if self._max_hit():
+                    return _else
+                # asset not found, lookup
+                elif self._lookup:
+                    # lookup must return, the value, expires and future
+                    try:
+                        value, expires, future = self._lookup(key)
+                        # set the data
+                        self._dict[key] = Book(value, expires, future, lock=self._lock)
+                        # return the asset, use this method to make sure the Expires/Future
+                        return value
+                    except KeyError:
+                        # no asset exists, dont save it as None
+                        pass
+            # all else, return the else
+            return _else
 
     # ----
     # Sets
@@ -188,24 +153,28 @@ class Shelf(object):
     def set(self, key, value, expires=None, future=None, check=True):
         """Set a value
         """
-        if key and (self._check_value(value) or not check):
-            self._dict[key].set(value, expires=expires, future=future)
-            self.signals.emit("asset-added", key, value)
-            return key
-        else:
-            if self._max_hit():
-                return False
-            if (check and self._check_value(value)) or not check:
-                key = self._get_next_key()
-                self._dict[key] = Book(value, expires=expires, future=future)
+        # assert the values above
+        with self._lock:
+            if key and (not check or self._check_value(value)):
+                self._dict[key].set(value, expires=expires, future=future)
                 self.signals.emit("asset-added", key, value)
                 return key
-            return False
+            else:
+                if self._max_hit():
+                    return False
+                if not check or self._check_value(value):
+                    key = self._get_next_key()
+                    self._dict[key] = Book(value, expires=expires, future=future, lock=self._lock)
+                    self.signals.emit("asset-added", key, value)
+                    return key
+                return False
 
-    def append(self, value, expires=None, future=None, check=True):
+    def append(self, *values, **kwargs):
         """Add a new value to the suite
         """
-        return self.set(None, value, expires=expires, future=future, check=check)
+        expires, future, check = kwargs.get('expires'), kwargs.get('future'), kwargs.get('check', True)
+        keys = map(lambda v: self.set(None, v, expires, future, check), values)
+        return keys[0] if len(keys) == 1 else keys
 
     def setdefault(self, key, value, expires=None, future=None, check=True):
         if self.has(key):
@@ -291,10 +260,10 @@ class Shelf(object):
     # Callbacks
     # -------------
     def _check_value(self, value):
-        if hasattr(self.checker, "__call__"):
-            return self.checker(self, value) is True
-        else:
-            return True
+        try:
+            return self._validate(self, value) is True if self._validate else True
+        except:
+            return False
 
     def _max_hit(self):
-        return self.max is not None and len(self) >= self.max
+        return self._max is not None and len(self) >= self._max

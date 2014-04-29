@@ -1,14 +1,17 @@
 import itertools
+from threading import RLock
 
 from suite.shelf import Shelf
 from suite.helpers import KeyGenerator
 
 
 class Library(object):
+    __slots__ = ["_shelves", "_lock", "fitter", "_keygen"]
     def __init__(self, *shelves, **kwargs):
+        self._lock = RLock()
         self._shelves = []
         self.fitter = kwargs.get('fitter', None)
-        self._key_gen = KeyGenerator()
+        self._keygen = KeyGenerator()
         if shelves:
             map(self.add_shelf, shelves)
 
@@ -20,8 +23,10 @@ class Library(object):
         self._shelves.append(shelf)
         # listen for changes
         shelf.signals.connect("priority-changed", self._resort)
-        # set the labeler
-        shelf._key_gen = self._key_gen
+        # replace the key gen
+        shelf._keygen = self._keygen
+        # replace the locker
+        shelf._lock = self._lock
         # resort the library
         self._resort()
 
