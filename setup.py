@@ -3,13 +3,16 @@ from setuptools import setup
 classifiers = ["Development Status :: 4 - Beta",
                "License :: OSI Approved :: Apache Software License"]
 
+with open('requirements.txt') as f:
+    install_requires = f.readlines()
+
 setup(name='suite',
-      version='1.0.0',
+      version='1.0.1',
       description="Time sensitive dictionary and library",
       long_description="""A lightweight extended dict to manage 
-future/expiring assets and relationships between dictionarys aka library.""",
+future/expiring assets and relationships between dictionarys""",
       classifiers=classifiers,
-      keywords='dict list expire future',
+      keywords='dict list expire future cache',
       author='@stevepeak',
       author_email='steve@stevepeak.net',
       url='https://github.com/stevepeak/suite',
@@ -17,5 +20,5 @@ future/expiring assets and relationships between dictionarys aka library.""",
       packages=["suite"],
       include_package_data=True,
       zip_safe=False,
-      install_requires=[],
+      install_requires=install_requires,
       entry_points=None)
