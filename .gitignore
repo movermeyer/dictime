@@ -25,7 +25,7 @@ develop-eggs
 lib
 lib64
 __pycache__
-suite.sublime-workspace
+*.sublime*
 venv
 .coverage
 coverage_html_report
