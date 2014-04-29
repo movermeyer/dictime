@@ -8,6 +8,6 @@ install:
   - python setup.py install
   - pip install coveralls
 script:
-  coverage run -m suite.tests
+  coverage run -m unittest discover -s tests
 after_success:
   coveralls
