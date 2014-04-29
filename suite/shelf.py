@@ -1,6 +1,7 @@
 import signals
 from threading import RLock
 from datetime import datetime
+from datetime import timedelta
 
 from .book import Book
 from .helpers import undefined
@@ -8,11 +9,9 @@ from .helpers import KeyGenerator
 
 
 class Shelf(object):
-    """A groovy dictonary on steroids.
-    """
     __slots__ = ["_lookup", "_validate", "_priority",
                  "_expires", "signals", "__lock",
-                 "_lastrefresh", "_max", "_dict", "__keygen"]
+                 "_last_expired", "_max", "_dict", "__keygen"]
 
     def __init__(self, lookup=None, validate=None, expires=None, max=None, priority=0):
         # set custom functions
@@ -22,8 +21,9 @@ class Shelf(object):
         self._validate = validate
         assert hasattr(validate, "__call__") or validate is None, "validate must be callable"
 
-        self._expires = expires or datetime.max
-        assert isinstance(self._expires, datetime), "expires is not a valid type"
+        self._expires = expires
+        self._last_expired = datetime.now() if expires else None
+        assert expires is None or isinstance(expires, timedelta), "expires is not a valid type"
 
         self._max = max
         assert isinstance(self._max, (int, type(None))), "max must be an integer"
@@ -68,9 +68,12 @@ class Shelf(object):
         return key
 
     def _expired(self):
-        if self._expires <= datetime.now():
-            self._dict = {}
-            return True
+        if self._expires and self._last_expired:
+            now = datetime.now()
+            if (self._last_expired + self._expires) <= now:
+                self._last_expired = now
+                self._dict = {}
+                return True
         return False
 
     @property
@@ -182,9 +185,9 @@ class Shelf(object):
         else:
             return self.set(key, value, expires=expires, future=future, check=check)
 
-    # -------------
+    # -------
     # Deletes
-    # -------------
+    # -------
     def remove(self, key):
         """Removes a key from the Suite
         """
@@ -200,14 +203,14 @@ class Shelf(object):
         """
         self._dict = {}
 
-    # -------------
+    # ------
     # Basics
-    # -------------
-    def has(self, key):
+    # ------
+    def has_key(self, key):
         """Does the key exist?
         This method will check to see if it has expired too.
         """
-        return self.get(key) is not undefined
+        return self.get(key, undefined) is not undefined
 
     def __contains__(self, key):
         """Time insensitive
@@ -256,9 +259,9 @@ class Shelf(object):
         else:
             return self.priority == other.priority
 
-    # -------------
+    # ---------
     # Callbacks
-    # -------------
+    # ---------
     def _check_value(self, value):
         try:
             return self._validate(self, value) is True if self._validate else True

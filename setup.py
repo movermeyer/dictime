@@ -7,7 +7,7 @@ with open('requirements.txt') as f:
     install_requires = f.readlines()
 
 setup(name='suite',
-      version='1.0.1',
+      version='0.2.0',
       description="Time sensitive dictionary and library",
       long_description="""A lightweight extended dict to manage 
 future/expiring assets and relationships between dictionarys""",

@@ -1,4 +1,6 @@
+import time
 import unittest
+from datetime import timedelta
 
 import suite
 
@@ -27,8 +29,7 @@ class Tests(unittest.TestCase):
         "can iter shelf"
         s = suite.Shelf()
         s.append(*range(10))
-        self.assertListEqual([x[1] for x in s],
-                             range(10))
+        self.assertListEqual([x[1] for x in s], range(10))
 
     def test_max(self):
        "max books on shelf"
@@ -39,4 +40,11 @@ class Tests(unittest.TestCase):
 
     def test_refresh(self):
         "shelves can expire all its contents"
-        self.skipTest("wip")
+        s = suite.Shelf(expires=timedelta(milliseconds=100))
+        key = s.append("something")
+        time.sleep(.1)
+        self.assertFalse(s.has_key(key), "the shelf was not emptied")
+        key = s.append("something_else")
+        self.assertEqual(s[key], "something_else")
+        time.sleep(.1)
+        self.assertFalse(s.has_key(key), "the shelf was not emptied")

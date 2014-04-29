@@ -1,4 +1,4 @@
-version = __version__ = VERSION = '1.0.1'
+version = __version__ = VERSION = '0.2.0'
 
 from .shelf import Book
 from .shelf import Shelf
