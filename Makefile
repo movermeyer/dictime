@@ -6,8 +6,8 @@ open:
 deploy: tag upload
 
 tag:
-	git tag -m "" -a v$(shell grep "version = '" dictime/__init__.py | cut -d"'" -f 2)
-	git push origin v$(shell grep "version = '" dictime/__init__.py | cut -d"'" -f 2)
+	git tag -m "" -a v$(shell grep "VERSION = '" dictime/__init__.py | cut -d"'" -f 2)
+	git push origin v$(shell grep "VERSION = '" dictime/__init__.py | cut -d"'" -f 2)
 
 upload:
 	python setup.py sdist upload

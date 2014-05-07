@@ -3,13 +3,10 @@ from setuptools import setup
 classifiers = ["Development Status :: 4 - Beta",
                "License :: OSI Approved :: Apache Software License"]
 
-with open('README.md') as f:
-    long_description = f.readlines()
-
 setup(name='dictime',
       version='0.0.1',
       description="Dictionary with the dimension of time",
-      long_description=long_description,
+      long_description="",
       classifiers=classifiers,
       keywords='dict list expire future cache',
       author='@stevepeak',
