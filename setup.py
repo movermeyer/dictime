@@ -3,22 +3,21 @@ from setuptools import setup
 classifiers = ["Development Status :: 4 - Beta",
                "License :: OSI Approved :: Apache Software License"]
 
-with open('requirements.txt') as f:
-    install_requires = f.readlines()
+with open('README.md') as f:
+    long_description = f.readlines()
 
-setup(name='suite',
-      version='0.2.0',
-      description="Time sensitive dictionary and library",
-      long_description="""A lightweight extended dict to manage 
-future/expiring assets and relationships between dictionarys""",
+setup(name='dictime',
+      version='0.0.1',
+      description="Dictionary with the dimension of time",
+      long_description=long_description,
       classifiers=classifiers,
       keywords='dict list expire future cache',
       author='@stevepeak',
       author_email='steve@stevepeak.net',
-      url='https://github.com/stevepeak/suite',
+      url='https://github.com/stevepeak/dictime',
       license='Apache v2',
-      packages=["suite"],
+      packages=["dictime"],
       include_package_data=True,
       zip_safe=False,
-      install_requires=install_requires,
+      install_requires=[],
       entry_points=None)

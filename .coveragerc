@@ -1,6 +1,6 @@
 [run]
 branch = True
-source = suite
+source = dictime
 
 [report]
 exclude_lines =

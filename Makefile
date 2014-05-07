@@ -1,23 +1,23 @@
 .PHONY: tag test
 
 open:
-	subl --project ./suite.sublime-project
+	subl --project ./dictime.sublime-project
 
 deploy: tag upload
 
 tag:
-	git tag -m "" -a v$(shell grep "version = '" suite/__init__.py | cut -d"'" -f 2)
-	git push origin v$(shell grep "version = '" suite/__init__.py | cut -d"'" -f 2)
+	git tag -m "" -a v$(shell grep "version = '" dictime/__init__.py | cut -d"'" -f 2)
+	git push origin v$(shell grep "version = '" dictime/__init__.py | cut -d"'" -f 2)
 
 upload:
 	python setup.py sdist upload
 
 test:
-	. venv/bin/activate; nosetests --with-coverage --cover-package=suite --cover-html --cover-html-dir=coverage_html_report --cover-branches
+	. venv/bin/activate; nosetests --with-coverage --cover-package=dictime --cover-html --cover-html-dir=coverage_html_report --cover-branches
 
 test.all:
-	python2.7 -m suite.tests
-	python3.3 -m suite.tests
+	python2.7 -m dictime.tests
+	python3.3 -m dictime.tests
 
 venv:
 	virtualenv venv

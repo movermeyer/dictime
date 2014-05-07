@@ -6,7 +6,7 @@
 .tox/
 MANIFEST
 doc/build/
-*.sublime-workspace
+*.sublime-*
 *.pyc
 .DS_Store
  

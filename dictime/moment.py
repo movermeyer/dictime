@@ -1,26 +1,20 @@
 from threading import RLock
 from datetime import datetime
 
-from suite.helpers import undefined
 
-
-class Book(object):
-    """Books will always have (1) value at a time.
-    Any new values added will replace the prior value with no discrimination
-    """
+class moment(object):
     __slots__ = ['futures', '_lock']
-    def __init__(self, value=undefined, expires=None, future=None, lock=None):
+    def __init__(self, value=None, expires=None, future=None, lock=None):
         self.futures = []
         # thread safety
         self._lock = lock or RLock()
-        if value != undefined:
-            self.set(value, expires, future)
+        self.set(value, expires, future)
 
     def get(self):
         """Called to get the asset values and if it is valid
         """
-        now = datetime.now()
         with self._lock:
+            now = datetime.now()
             active = []
             for i, vef in enumerate(self.futures):
                 # has expired
@@ -30,19 +24,18 @@ class Book(object):
                 # in future
                 elif (vef[2] or datetime.min) >= now:
                     continue
-                active.append(i)
+                else:
+                    active.append(i)
 
             if active:
                 # this will evict values old values
                 # because new ones are "more recent" via future
-                values = self.futures[active[-1]]
+                value, _e, _f = self.futures[active[-1]]
                 for i in active[:-1]:
                     self.futures.pop(i)
-                return self.futures.index(values), values[0]
-            return None, undefined
+                return value
 
-    def __len__(self):
-        return len(self.futures)
+            raise ValueError("dicttime: no current value, however future has (%d) values" % len(self.futures))
 
     def set(self, value, expires=None, future=None):
         now = datetime.now()
@@ -52,3 +45,6 @@ class Book(object):
             assert future < expires, "expires before existing"
 
         self.futures.append((value, expires, future))
+
+    def __len__(self):
+        return len(self.futures)
