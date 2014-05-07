@@ -18,11 +18,9 @@ class dictime(object):
             self.update(kwargs)
 
     def expired(self):
-        print "\033[92m....\033[0m", 'check expires', self._expires, self._last_expired
         if self._expires and self._last_expired:
             now = datetime.now()
             if (self._last_expired + self._expires) <= now:
-                print "\033[92m....\033[0m", 'EXPIRE'
                 self._last_expired = now
                 self._dict = {}
                 if self._callback:
