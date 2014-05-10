@@ -4,7 +4,7 @@ classifiers = ["Development Status :: 4 - Beta",
                "License :: OSI Approved :: Apache Software License"]
 
 setup(name='dictime',
-      version='0.0.1',
+      version='0.0.2',
       description="Dictionary with the dimension of time",
       long_description="",
       classifiers=classifiers,
