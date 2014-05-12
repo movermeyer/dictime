@@ -13,8 +13,8 @@ class Tests(unittest.TestCase):
 
     def test_future(self):
         "moments can have multiple future values"
-        b = moment('a', future=datetime.now() + timedelta(milliseconds=10))
-        b.set('b', future=datetime.now() + timedelta(milliseconds=20))
+        b = moment('a', future=dict(milliseconds=10))
+        b.set('b', future=dict(milliseconds=20))
         self.assertRaises(ValueError, b.get)
         time.sleep(.01)
         self.assertEquals(b.get(), 'a')
@@ -48,7 +48,7 @@ class Tests(unittest.TestCase):
 
     def test_set(self):
         "moments validate expires/future values"
-        self.assertRaises(AssertionError, moment().set, 1, 'not a date')
-        self.assertRaises(AssertionError, moment().set, 1, future='not a date')
+        self.assertRaises(ValueError, moment().set, 1, 'not a date')
+        self.assertRaises(ValueError, moment().set, 1, future='not a date')
         self.assertRaises(AssertionError, moment().set, 1, expires=datetime.now() - timedelta(minutes=10))
         self.assertRaises(AssertionError, moment().set, 1, datetime.now() + timedelta(minutes=10), datetime.now() + timedelta(minutes=20))

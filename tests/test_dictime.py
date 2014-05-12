@@ -1,5 +1,6 @@
 import time
 import unittest
+from datetime import datetime
 from datetime import timedelta
 
 from dictime import dictime
@@ -76,6 +77,34 @@ class Tests(unittest.TestCase):
         self.assertEqual(s["fruit"], 'orange')
         time.sleep(.1)
         self.assertEqual(s["fruit"], 'apple')
+
+    def test_set_key_exire_delta(self):
+        s = dictime()
+        s.set("fruit", "apple", expires=timedelta(milliseconds=100))
+        time.sleep(.2)
+        self.assertNotIn("fruit", s)
+
+    def test_set_key_exire_datetime(self):
+        s = dictime()
+        s.set("fruit", "apple", expires=datetime.now() + timedelta(milliseconds=100))
+        time.sleep(.2)
+        self.assertNotIn("fruit", s)
+
+    def test_set_key_future(self):
+        s = dictime()
+        s.set("fruit", "apple", future=dict(milliseconds=100))
+        time.sleep(.2)
+        self.assertIn("fruit", s)
+        self.assertEqual(s["fruit"], "apple")
+
+    def test_set_key_expandfut(self):
+        s = dictime()
+        s.set("fruit", "apple", expires=dict(milliseconds=200), future=dict(milliseconds=100))
+        time.sleep(.1)
+        self.assertIn("fruit", s)
+        self.assertEqual(s["fruit"], "apple")
+        time.sleep(.1)
+        self.assertNotIn("fruit", s)
 
     def test_getitem(self):
         s = dictime(one=1, two=2, three=3)

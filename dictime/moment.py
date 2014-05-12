@@ -1,5 +1,6 @@
 from threading import RLock
 from datetime import datetime
+from datetime import timedelta
 
 
 class moment(object):
@@ -39,8 +40,28 @@ class moment(object):
 
     def set(self, value, expires=None, future=None):
         now = datetime.now()
-        assert isinstance(expires, (type(None), datetime)) and (expires is None or expires > now), "expired: invalid or already expired"
-        assert isinstance(future, (type(None), datetime)) and (future is None or future > now), "future: invalid or not in future"
+        if expires is not None:
+            if isinstance(expires, dict):
+                expires = now + timedelta(**expires)
+            if isinstance(expires, datetime):
+                assert expires > now, "expired value has already expired"
+            elif isinstance(expires, timedelta):
+                expires = now + expires
+                assert expires > now, "expired value has already expired"
+            else:
+                raise ValueError('expires must be type (None, datetime.timedelta, or datetime.datetime), %s provided' % type(expires))
+
+        if future is not None:
+            if isinstance(future, dict):
+                future = now + timedelta(**future)
+            if isinstance(future, datetime):
+                assert future > now, "future value must be in the future"
+            elif isinstance(future, timedelta):
+                future = now + future
+                assert future > now, "future value must be in the future"
+            else:
+                raise ValueError('future must be type (None, datetime.timedelta, or datetime.datetime), %s provided' % type(future))
+
         if expires and future:
             assert future < expires, "expires before existing"
 
