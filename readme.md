@@ -1,6 +1,7 @@
-[![codecov.io](https://codecov.io/github/stevepeak/dictime/coverage.svg?branch=master)](https://codecov.io/github/stevepeak/dictime?branch=master)
-dictime [![Build Status](https://secure.travis-ci.org/stevepeak/dictime.png)](http://travis-ci.org/stevepeak/dictime) [![Version](https://pypip.in/v/dictime/badge.png)](https://github.com/stevepeak/dictime) [![Coverage Status](https://coveralls.io/repos/stevepeak/dictime/badge.png)](https://coveralls.io/r/stevepeak/dictime)
+dictime 
 -------
+
+[![Build Status](https://secure.travis-ci.org/stevepeak/dictime.png)](http://travis-ci.org/stevepeak/dictime) [![Version](https://pypip.in/v/dictime/badge.png)](https://github.com/stevepeak/dictime) [![codecov.io](https://codecov.io/github/stevepeak/dictime/coverage.svg?branch=master)](https://codecov.io/github/stevepeak/dictime?branch=master)
 
 > Time dimensional dictionaries, featuring expiring and future key values.
 >  `dictime` extends the standard python `dict` with **3** distinct additions
